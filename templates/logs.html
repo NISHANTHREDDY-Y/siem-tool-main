@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block page_title %}Log Management{% endblock %}
+{% block content %}
+
+<section class="panel">
+    <form class="filter-bar" method="get">
+        <input name="q" placeholder="Search log text" value="{{ filters.get('q', '') }}">
+        <select name="severity">
+            <option value="">All severities</option>
+            {% for level in ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"] %}
+            <option value="{{ level }}" {% if filters.get('severity') == level %}selected{% endif %}>{{ level }}</option>
+            {% endfor %}
+        </select>
+        <select name="minimum_severity">
+            <option value="">Show all operational logs</option>
+            <option value="MEDIUM" {% if filters.get('minimum_severity') == 'MEDIUM' %}selected{% endif %}>Security-relevant: Medium and above</option>
+            <option value="HIGH" {% if filters.get('minimum_severity') == 'HIGH' %}selected{% endif %}>High and Critical only</option>
+            <option value="CRITICAL" {% if filters.get('minimum_severity') == 'CRITICAL' %}selected{% endif %}>Critical only</option>
+        </select>
+        <input name="username" placeholder="Username" value="{{ filters.get('username', '') }}">
+        <input name="source" placeholder="Source" value="{{ filters.get('source', '') }}">
+        <input name="event_type" placeholder="Event type or ID" value="{{ filters.get('event_type', '') }}">
+        <input type="date" name="date_from" value="{{ filters.get('date_from', '') }}">
+        <input type="date" name="date_to" value="{{ filters.get('date_to', '') }}">
+        <button type="submit">Apply</button>
+        <a class="button secondary" href="/export/logs/csv?{{ request.query_string.decode() }}">CSV</a>
+        <a class="button secondary" href="/export/logs/pdf?{{ request.query_string.decode() }}">PDF</a>
+    </form>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr><th>ID</th><th>Timestamp</th><th>Log Type</th><th>Event</th><th>User</th><th>Source</th><th>Severity</th><th>Raw Event</th></tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.timestamp }}</td>
+                <td><span class="badge info">{{ log.channel or log.source or 'Unknown' }}</span></td>
+                <td><b>{{ log.event_type }}</b><small>Event ID {{ log.event_id }}</small></td>
+                <td>{{ log.username }}</td>
+                <td>{{ log.computer or log.source }}</td>
+                <td><span class="badge {{ log.severity|lower }}">{{ log.severity }}</span></td>
+                <td>
+                    <details>
+                        <summary>View</summary>
+                        <div class="event-explanation"><b>What happened</b><p>{{ log.explanation.what }}</p><b>Why this severity</b><p>{{ log.explanation.severity_reason }}</p><b>Recommended response</b><p>{{ log.explanation.response }}</p></div>
+                        <b>Raw Windows event</b>
+                        <pre>{{ log.raw_event or log.message }}</pre>
+                    </details>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8">No logs match the current filters.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}
