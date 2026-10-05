@@ -1,0 +1,5 @@
+Flask>=3.0
+Werkzeug>=3.0
+Flask-SocketIO>=5.3
+pywin32>=306; platform_system == "Windows"
+reportlab>=4.0
